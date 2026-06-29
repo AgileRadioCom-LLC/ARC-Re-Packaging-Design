@@ -1,0 +1,10 @@
+*.tmp
+*.bak
+*-cache.lib
+*-rescue.lib
+*~
+*.kicad_prl
+/plots/
+/gerbers/
+__pycache__/
+*.pyc

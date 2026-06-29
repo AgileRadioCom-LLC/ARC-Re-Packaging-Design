@@ -1,0 +1,21 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP SEAF-40-05.0-S-10-2-A-K-TR_JX1
+D Samtec SEARAY 200-pin receptacle 0.8mm quad-row (JX1 pinout)
+K Samtec SEARAY SEAF connector
+F 
+$ENDCMP
+#
+$CMP SEAF-40-05.0-S-10-2-A-K-TR_JX2
+D Samtec SEARAY 200-pin receptacle 0.8mm quad-row (JX2 pinout)
+K Samtec SEARAY SEAF connector
+F 
+$ENDCMP
+#
+$CMP SEAF-30-05.0-S-10-2-A-K-TR_JX3
+D Samtec SEARAY 120-pin receptacle 0.8mm quad-row (JX3 pinout)
+K Samtec SEARAY SEAF connector
+F 
+$ENDCMP
+#
+#End Doc Library

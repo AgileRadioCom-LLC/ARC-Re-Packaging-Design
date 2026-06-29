@@ -1,0 +1,7 @@
+(sym_lib_table
+  (lib (name "UZEV_Connectors")(type "Legacy")(uri "${KIPRJMOD}/UZEV_Connectors.lib")(options "")(descr ""))
+  (lib (name "Device")(type "Legacy")(uri "/usr/share/kicad/library/Device.lib")(options "")(descr ""))
+  (lib (name "Connector")(type "Legacy")(uri "/usr/share/kicad/library/Connector.lib")(options "")(descr ""))
+  (lib (name "power")(type "Legacy")(uri "/usr/share/kicad/library/power.lib")(options "")(descr ""))
+  (lib (name "Switch")(type "Legacy")(uri "/usr/share/kicad/library/Switch.lib")(options "")(descr ""))
+)

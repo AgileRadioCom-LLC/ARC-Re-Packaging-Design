@@ -1,0 +1,12 @@
+# KiCad temp/bak files
+*.tmp
+*.bak
+*-cache.lib
+*-rescue.lib
+*.bck
+*~
+# Workspace files
+*.kicad_prl
+# Build directories
+/plots/
+/gerbers/

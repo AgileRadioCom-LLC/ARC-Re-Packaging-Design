@@ -1,0 +1,437 @@
+EESchema Schematic File Version 4
+EELAYER 30 0
+EELAYER END
+$Descr A3 16535 11693
+encoding utf-8
+Sheet 5 5
+Title "Sheet 4: Support I/O"
+Date "2026-03-19"
+Rev "1.0"
+Comp "ADRV9009 + UltraZed-EV Carrier Board"
+Comment1 "Step 8E: Support I/O - I2C, UART, Reset, JTAG Isolation"
+Comment2 "Defense-grade hardening: JTAG/UART isolation via DNP resistors"
+Comment3 ""
+Comment4 ""
+$EndDescr
+Text Notes 1000 800  0    100  ~ 0
+SHEET 4: SUPPORT I/O
+Text Notes 950  1650 0    60   ~ 0
+========== 1. CARRIER CARD I2C BUS ==========
+Text Notes 950  1950 0    35   ~ 0
+CC_SCL (JX3.A1), CC_SDA (JX3.C1) — Channel 0 of SOM PCA9543A I2C mux
+Text Notes 950  2150 0    35   ~ 0
+Pull up to VCCO_HP_65 (1.8V). SOM operates I2C at 1.8V via Bank 503.
+Text GLabel 1500 2900 0    40   BiDi ~ 0
+CC_SCL
+$Comp
+L Device:R R1
+U 1 1 8C000001
+P 2200 2600
+F 0 "R1" H 2250 2500 40  0000 L CNN
+F 1 "2.2k" H 2250 2700 40  0000 L CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" H 2200 2800 40  0001 C CNN
+F 3 "" H 2200 2600 40  0001 C CNN
+	1    2200 2600
+	1    0    0    -1  
+$EndComp
+Text GLabel 2200 2300 2    40   Input ~ 0
+VCCO_HP_65
+Wire Wire Line
+	1900 2900 2200 2900
+Wire Wire Line
+	2200 2900 2200 2800
+Text GLabel 1500 3400 0    40   BiDi ~ 0
+CC_SDA
+$Comp
+L Device:R R2
+U 1 1 8C000002
+P 2200 3100
+F 0 "R2" H 2250 3000 40  0000 L CNN
+F 1 "2.2k" H 2250 3200 40  0000 L CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" H 2200 3300 40  0001 C CNN
+F 3 "" H 2200 3100 40  0001 C CNN
+	1    2200 3100
+	1    0    0    -1  
+$EndComp
+Text GLabel 2200 3300 2    40   Input ~ 0
+VCCO_HP_65
+Wire Wire Line
+	1900 3400 2200 3400
+Wire Wire Line
+	2200 3400 2200 3300
+Text GLabel 1500 3900 0    40   BiDi ~ 0
+CC_INT_N
+$Comp
+L Device:R R3
+U 1 1 8C000003
+P 2200 3600
+F 0 "R3" H 2250 3500 40  0000 L CNN
+F 1 "10k" H 2250 3700 40  0000 L CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" H 2200 3800 40  0001 C CNN
+F 3 "" H 2200 3600 40  0001 C CNN
+	1    2200 3600
+	1    0    0    -1  
+$EndComp
+Text GLabel 2200 3300 2    40   Input ~ 0
+VCCO_HP_65
+Wire Wire Line
+	1900 3900 2200 3900
+Wire Wire Line
+	2200 3900 2200 3800
+Text Notes 1000 5500 0    60   ~ 0
+========== 2. UART DEBUG HEADER ==========
+Text Notes 1000 5800 0    35   ~ 0
+PS UART on MIO pair from JX3. Use MIO_26 (TX) / MIO_27 (RX) for UART0.
+Text Notes 1000 6000 0    35   ~ 0
+1.8V LVCMOS levels. Use FTDI FT232R or 1.8V-compatible USB-UART adapter.
+Text Notes 1000 6200 0    35   ~ 0
+UART isolation: 0-ohm DNP resistors (R4, R5) for deployed units.
+$Comp
+L Connector:Conn_01x04_Male J6
+U 1 1 8C000004
+P 4500 6600
+F 0 "J6" H 4400 6500 40  0000 L CNN
+F 1 "UART_HDR" H 4750 6700 40  0000 L CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical" H 4500 6800 40  0001 C CNN
+F 3 "" H 4500 6600 40  0001 C CNN
+	1    4500 6600
+	1    0    0    -1  
+$EndComp
+Text GLabel 1500 6400 0    40   Output ~ 0
+MIO_26
+$Comp
+L Device:R R4
+U 1 1 8C000005
+P 2500 6400
+F 0 "R4" H 2550 6300 40  0000 L CNN
+F 1 "0R_DNP" H 2550 6500 40  0000 L CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" H 2500 6600 40  0001 C CNN
+F 3 "" H 2500 6400 40  0001 C CNN
+	1    2500 6400
+	1    0    0    -1  
+$EndComp
+Text Notes 3200 6420 0    30   ~ 0
+TX
+Wire Wire Line
+	1900 6400 2300 6400
+Wire Wire Line
+	2700 6400 4100 6400
+Text GLabel 1500 6700 0    40   Input ~ 0
+MIO_27
+$Comp
+L Device:R R5
+U 1 1 8C000006
+P 2500 6700
+F 0 "R5" H 2550 6600 40  0000 L CNN
+F 1 "0R_DNP" H 2550 6800 40  0000 L CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" H 2500 6900 40  0001 C CNN
+F 3 "" H 2500 6700 40  0001 C CNN
+	1    2500 6700
+	1    0    0    -1  
+$EndComp
+Text Notes 3200 6720 0    30   ~ 0
+RX
+Wire Wire Line
+	1900 6700 2300 6700
+Wire Wire Line
+	2700 6700 4100 6700
+$Comp
+L power:GND #PWR0101
+U 1 1 8C000007
+P 4500 7200
+F 0 "#PWR0101" H 4500 7250 50  0001 C CNN
+F 1 "GND" H 4500 7350 40  0000 C CNN
+F 2 "" H 4500 7200 50  0001 C CNN
+F 3 "" H 4500 7200 50  0001 C CNN
+	1    4500 7200
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4500 7200 4500 6800
+Wire Wire Line
+	4500 6800 4700 6800
+Text GLabel 4900 7000 2    40   Input ~ 0
+VCCO_HP_65
+Text Notes 8500 1850 0    60   ~ 0
+========== 3. RESET AND POWER-GOOD ==========
+Text Notes 8500 2150 0    35   ~ 0
+SOM_RESET_IN_N (JX1.A2): Active-low, 10k pullup to VCCO_PSIO on SOM.
+Text Notes 8500 2350 0    35   ~ 0
+Add pushbutton to GND for manual reset. SOM pullup exists on-board.
+Text GLabel 9050 3050 0    40   Output ~ 0
+SOM_RESET_IN_N
+$Comp
+L Device:R R10
+U 1 1 8C000008
+P 9750 2750
+F 0 "R10" H 9800 2650 40  0000 L CNN
+F 1 "10k" H 9800 2850 40  0000 L CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" H 9750 2950 40  0001 C CNN
+F 3 "" H 9750 2750 40  0001 C CNN
+	1    9750 2750
+	1    0    0    -1  
+$EndComp
+Text GLabel 9750 2450 2    40   Input ~ 0
+VCCO_HP_65
+Wire Wire Line
+	9450 3050 9750 3050
+Wire Wire Line
+	9750 3050 9750 2950
+$Comp
+L Switch:SW_Push SW1
+U 1 1 8C000009
+P 10350 3050
+F 0 "SW1" H 10400 2950 40  0000 L CNN
+F 1 "RESET" H 10400 3150 40  0000 L CNN
+F 2 "Button_Switch_SMD:SW_SPST_CK_RS282G05A3" H 10350 3250 40  0001 C CNN
+F 3 "" H 10350 3050 40  0001 C CNN
+	1    10350 3050
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	9750 3050 10150 3050
+$Comp
+L power:GND #PWR000A01
+U 1 1 8C00000A
+P 10550 3350
+F 0 "#PWR000A01" H 10550 3400 50  0001 C CNN
+F 1 "GND" H 10550 3500 40  0000 C CNN
+F 2 "" H 10550 3350 50  0001 C CNN
+F 3 "" H 10550 3350 50  0001 C CNN
+	1    10550 3350
+	1    0    0    -1  
+$EndComp
+Text Notes 8550 3850 0    35   ~ 0
+SOM_PG_OUT (JX1.D47): Open-drain, 10k pullup to 3.3V on SOM.
+Text Notes 8550 4050 0    35   ~ 0
+LED ON = SOM power good. Do NOT drive high from carrier.
+Text GLabel 9050 4450 0    40   Input ~ 0
+SOM_PG_OUT
+$Comp
+L Device:R R11
+U 1 1 8C00000B
+P 9750 4450
+F 0 "R11" H 9800 4350 40  0000 L CNN
+F 1 "1k" H 9800 4550 40  0000 L CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" H 9750 4650 40  0001 C CNN
+F 3 "" H 9750 4450 40  0001 C CNN
+	1    9750 4450
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:LED D1
+U 1 1 8C00000C
+P 10350 4450
+F 0 "D1" H 10400 4350 40  0000 L CNN
+F 1 "GREEN" H 10400 4550 40  0000 L CNN
+F 2 "LED_SMD:LED_0603_1608Metric" H 10350 4650 40  0001 C CNN
+F 3 "" H 10350 4450 40  0001 C CNN
+	1    10350 4450
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	9450 4450 9550 4450
+Wire Wire Line
+	9950 4450 10150 4450
+$Comp
+L power:GND #PWR000D01
+U 1 1 8C00000D
+P 10550 4750
+F 0 "#PWR000D01" H 10550 4800 50  0001 C CNN
+F 1 "GND" H 10550 4900 40  0000 C CNN
+F 2 "" H 10550 4750 50  0001 C CNN
+F 3 "" H 10550 4750 50  0001 C CNN
+	1    10550 4750
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	10550 4450 10550 4550
+Text Notes 7550 5050 0    35   ~ 0
+CC_RESET_OUT_N (JX1.C46): Open-drain from SOM. Pullup needed on carrier.
+Text GLabel 9050 5250 0    40   Input ~ 0
+CC_RESET_OUT_N
+$Comp
+L Device:R R12
+U 1 1 8C00000E
+P 9750 4950
+F 0 "R12" H 9800 4850 40  0000 L CNN
+F 1 "10k" H 9800 5050 40  0000 L CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" H 9750 5150 40  0001 C CNN
+F 3 "" H 9750 4950 40  0001 C CNN
+	1    9750 4950
+	1    0    0    -1  
+$EndComp
+Text GLabel 9750 4650 2    40   Input ~ 0
+VCCO_HP_65
+Wire Wire Line
+	9450 5250 9750 5250
+Wire Wire Line
+	9750 5250 9750 5150
+Text Notes 7600 6700 0    60   ~ 0
+========== 4. JTAG ISOLATION (Security Hardening) ==========
+Text Notes 7600 7000 0    35   ~ 0
+0-ohm DNP resistors between JX1 JTAG pins and debug header.
+Text Notes 7600 7200 0    35   ~ 0
+Populate for development. Remove for deployed units to sever JTAG chain.
+$Comp
+L Connector:Conn_01x06_Male J7
+U 1 1 8C00000F
+P 11100 7900
+F 0 "J7" H 11000 7800 40  0000 L CNN
+F 1 "JTAG_HDR" H 11350 8000 40  0000 L CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical" H 11100 8100 40  0001 C CNN
+F 3 "" H 11100 7900 40  0001 C CNN
+	1    11100 7900
+	1    0    0    -1  
+$EndComp
+Text GLabel 8100 7900 0    40   BiDi ~ 0
+JTAG_TCK
+$Comp
+L Device:R R6
+U 1 1 8C000010
+P 9100 7900
+F 0 "R6" H 9150 7800 40  0000 L CNN
+F 1 "0R_DNP" H 9150 8000 40  0000 L CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" H 9100 8100 40  0001 C CNN
+F 3 "" H 9100 7900 40  0001 C CNN
+	1    9100 7900
+	0    -1   -1   0   
+$EndComp
+Text Notes 9700 7600 0    25   ~ 0
+JTAG_TCK (JX1.D1)
+Text GLabel 8100 8100 0    40   BiDi ~ 0
+JTAG_TDI
+$Comp
+L Device:R R7
+U 1 1 8C000011
+P 9100 8100
+F 0 "R7" H 9150 8000 40  0000 L CNN
+F 1 "0R_DNP" H 9150 8200 40  0000 L CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" H 9100 8300 40  0001 C CNN
+F 3 "" H 9100 8100 40  0001 C CNN
+	1    9100 8100
+	0    -1   -1   0   
+$EndComp
+Text Notes 9700 7900 0    25   ~ 0
+JTAG_TDI (JX1.C2)
+Text GLabel 8100 8000 0    40   BiDi ~ 0
+JTAG_TDO
+$Comp
+L Device:R R8
+U 1 1 8C000012
+P 9100 8000
+F 0 "R8" H 9150 7900 40  0000 L CNN
+F 1 "0R_DNP" H 9150 8100 40  0000 L CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" H 9100 8200 40  0001 C CNN
+F 3 "" H 9100 8000 40  0001 C CNN
+	1    9100 8000
+	0    -1   -1   0   
+$EndComp
+Text Notes 9700 8200 0    25   ~ 0
+JTAG_TDO (JX1.D2)
+Text GLabel 8100 7800 0    40   BiDi ~ 0
+JTAG_TMS
+$Comp
+L Device:R R9
+U 1 1 8C000013
+P 9100 7800
+F 0 "R9" H 9150 7700 40  0000 L CNN
+F 1 "0R_DNP" H 9150 7900 40  0000 L CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" H 9100 8000 40  0001 C CNN
+F 3 "" H 9100 7800 40  0001 C CNN
+	1    9100 7800
+	0    -1   -1   0   
+$EndComp
+Text Notes 9700 8500 0    25   ~ 0
+JTAG_TMS (JX1.C1)
+$Comp
+L power:GND #PWR0102
+U 1 1 8C000014
+P 11100 8200
+F 0 "#PWR0102" H 11100 8250 50  0001 C CNN
+F 1 "GND" H 11100 8350 40  0000 C CNN
+F 2 "" H 11100 8200 50  0001 C CNN
+F 3 "" H 11100 8200 50  0001 C CNN
+	1    11100 8200
+	1    0    0    -1  
+$EndComp
+Text GLabel 11500 8900 2    40   Input ~ 0
+VCCO_HP_65
+Text Notes 1000 8500 0    60   ~ 0
+========== 5. VCCO_PSIO_501 (JX3.D18) ==========
+Text Notes 1000 8800 0    35   ~ 0
+Sets Bank 501 MIO voltage. Tie to 1.8V for UART compatibility.
+Text Notes 1000 9000 0    35   ~ 0
+If 3.3V peripherals needed on MIO, change to 3.3V.
+Text GLabel 1500 9400 0    40   Output ~ 0
+VCCO_PSIO_501
+Text GLabel 3000 9400 2    40   Input ~ 0
+VCCO_HP_65
+Wire Wire Line
+	1900 9400 2600 9400
+Text Notes 3450 9420 0    30   ~ 0
+1.8V — tied to VCCO_HP_65
+$Comp
+L Device:C C29
+U 1 1 8C000015
+P 2200 9600
+F 0 "C29" H 2250 9500 40  0000 L CNN
+F 1 "100nF" H 2250 9700 40  0000 L CNN
+F 2 "Capacitor_SMD:C_0402_1005Metric" H 2200 9800 40  0001 C CNN
+F 3 "" H 2200 9600 40  0001 C CNN
+	1    2200 9600
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR0103
+U 1 1 8C000016
+P 2200 9900
+F 0 "#PWR0103" H 2200 9950 50  0001 C CNN
+F 1 "GND" H 2200 10050 40  0000 C CNN
+F 2 "" H 2200 9900 50  0001 C CNN
+F 3 "" H 2200 9900 50  0001 C CNN
+	1    2200 9900
+	1    0    0    -1  
+$EndComp
+Text Notes 12600 4150 0    60   ~ 0
+========== DESIGN NOTES ==========
+Text Notes 12600 4450 0    35   ~ 0
+1. I2C pullups to 1.8V (VCCO_HP_65) — matches SOM I2C mux channel 0 levels
+Text Notes 12600 4650 0    35   ~ 0
+2. UART uses MIO_26/MIO_27 (UART0). Directly connected to JX3 pins D21/C22.
+Text Notes 12600 4850 0    35   ~ 0
+3. JTAG isolation: R6-R9 are 0-ohm DNP. Populate during dev, remove for deployment.
+Text Notes 12600 5050 0    35   ~ 0
+4. UART isolation: R4-R5 are 0-ohm DNP. Same hardening approach.
+Text Notes 12600 5250 0    35   ~ 0
+5. SOM_PG_OUT is open-drain — do NOT add pullup on carrier (SOM has 10k to 3.3V).
+Text Notes 12600 5450 0    35   ~ 0
+6. CC_RESET_OUT_N is open-drain — pullup R8 (10k to 1.8V) required on carrier.
+Text Notes 12600 5650 0    35   ~ 0
+7. VCCO_PSIO_501 set to 1.8V for UART. Change to 3.3V if adding 3.3V peripherals.
+Connection ~ 9750 3050
+Text GLabel 11500 7700 2    40   Input ~ 0
+VCCO_HP_65
+Wire Wire Line
+	8100 7800 8950 7800
+Wire Wire Line
+	8100 7900 8950 7900
+Wire Wire Line
+	8100 8000 8950 8000
+Wire Wire Line
+	8100 8100 8950 8100
+Wire Wire Line
+	9250 7800 11300 7800
+Wire Wire Line
+	9250 7900 11300 7900
+Wire Wire Line
+	9250 8000 11300 8000
+Wire Wire Line
+	9250 8100 11300 8100
+Wire Wire Line
+	11300 7700 11500 7700
+Wire Wire Line
+	11100 8200 11300 8200
+Wire Wire Line
+	10550 3050 10550 3350
+$EndSCHEMATC
