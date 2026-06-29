@@ -1,3 +1,0 @@
-(sym_lib_table
-  (lib (name "UZEV_Connectors")(type "Legacy")(uri "${KIPRJMOD}/UZEV_Connectors.lib")(options "")(descr ""))
-)

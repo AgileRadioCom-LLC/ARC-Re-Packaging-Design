@@ -1,3 +1,0 @@
-(fp_lib_table
-  (lib (name "UZEV_Connectors")(type "KiCad")(uri "${KIPRJMOD}/UZEV_Connectors.pretty")(options "")(descr "UltraZed-EV SEARAY footprints"))
-)
