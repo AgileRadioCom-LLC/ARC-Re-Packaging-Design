@@ -1,0 +1,547 @@
+# LAYOUT CONSTRAINTS — UZEV ADRV9009 Carrier
+**Rev 0.5 — 2026-06-23**
+Sources: ADRV9009 Data Sheet Rev B (ADRV9009.pdf, on disk); Capture Guide
+(ADRV9009_UZEV_Schematic_Capture_Guide-1.pdf, on disk); DEC-049 (gate 7
+diff-pair integrity verification); adrv9009_signals.sch. Items marked
+**[TO CONFIRM]** lack a primary-source citation from an on-disk document and
+must be verified before Gerber sign-off.
+
+---
+
+## 1. Impedance-Controlled Net Inventory
+
+### 1.1 JESD204B GTH SERDES Lanes
+
+4 RX lanes (M2C: ADRV9009 TX → FPGA RX), 4 TX lanes (C2M: FPGA TX →
+ADRV9009 RX). Lane mapping is non-sequential by design.
+
+**[VERIFIED 2026-06-22 — DEC-054]** Non-sequential mapping (rx_data[0]=DP1,
+NOT DP0) confirmed correct and intentional across three independent sources:
+`adrv9009_fmc.txt` (ADI port↔FMC pin), `system_constr.xdc` (PACKAGE_PIN + FMC
+comment, header: "non-sequential JESD204B mapping (Tab 3: verified)"),
+`system_top.v` / `adrv9009_bd.tcl` (BD lane_map {0 1 2 3} for RX). TX `{0 3 2
+1}` remap in `adrv9009_bd.tcl:236` is an internal JESD-IP↔xcvr link-layer remap
+and does NOT affect PCB wiring — carrier routing follows XDC PACKAGE_PIN
+assignments. ADRV9009-W/PCBZ Sheet 8 mezzanine-internal wiring is out of carrier
+scope (eval-card responsibility); carrier preserves FMC↔SOM pair continuity only.
+
+TX lanes have in-line 100 nF AC coupling caps (C21–C28, 0201 case) per
+ADRV9009 DS §Layout/Routing. Each TX lane has one cap on the P conductor and
+one on the N conductor; caps break each TX pair into two carrier segments
+(FMC-side net and FPGA-side net). Both segments require impedance control.
+
+| Group | JESD Lane | Signal dir | P net (FMC side) | N net (FMC side) | P net (FPGA side) | N net (FPGA side) | AC caps |
+|---|---|---|---|---|---|---|---|
+| JESD RX | rx_data[2] (DP0) | M2C | FMC_C06_DP0_M2C_P | FMC_C07_DP0_M2C_N | — | — | none |
+| JESD RX | rx_data[0] (DP1) | M2C | FMC_A02_DP1_M2C_P | FMC_A03_DP1_M2C_N | — | — | none |
+| JESD RX | rx_data[1] (DP2) | M2C | FMC_A06_DP2_M2C_P | FMC_A07_DP2_M2C_N | — | — | none |
+| JESD RX | rx_data[3] (DP3) | M2C | FMC_A10_DP3_M2C_P | FMC_A11_DP3_M2C_N | — | — | none |
+| JESD TX | tx_data[0] (DP1) | C2M | FMC_A22_DP1_C2M_P | FMC_A23_DP1_C2M_N | tx_data_0_DP1_P | tx_data_0_DP1_N | C21, C22 |
+| JESD TX | tx_data[1] (DP2) | C2M | FMC_A26_DP2_C2M_P | FMC_A27_DP2_C2M_N | tx_data_1_DP2_P | tx_data_1_DP2_N | C23, C24 |
+| JESD TX | tx_data[2] (DP0) | C2M | FMC_C02_DP0_C2M_P | FMC_C03_DP0_C2M_N | tx_data_2_DP0_P | tx_data_2_DP0_N | C25, C26 |
+| JESD TX | tx_data[3] (DP3) | C2M | FMC_A30_DP3_C2M_P | FMC_A31_DP3_C2M_N | tx_data_3_DP3_P | tx_data_3_DP3_N | C27, C28 |
+
+**Verified lane → FMC DP cross-check (2026-06-22, all 8 lanes — DEC-054):**
+
+| system_top port | FMC DP pair | FMC pins P/N | FPGA pkg pin P/N | GTH channel | Carrier net | Match? |
+|---|---|---|---|---|---|---|
+| rx_data_p[0] | **DP1_M2C** | A2/A3 | C4/C3 | MGTHRXP1_227 | FMC_A02_DP1_M2C_P/N | ✓ |
+| rx_data_p[1] | DP2_M2C | A6/A7 | D2/D1 | MGTHRXP0_227 | FMC_A06_DP2_M2C_P/N | ✓ |
+| rx_data_p[2] | DP0_M2C | C6/C7 | B2/B1 | MGTHRXP2_227 | FMC_C06_DP0_M2C_P/N | ✓ |
+| rx_data_p[3] | DP3_M2C | A10/A11 | A4/A3 | MGTHRXP3_227 | FMC_A10_DP3_M2C_P/N | ✓ |
+| tx_data_p[0] | **DP1_C2M** | A22/A23 | D6/D5 | MGTHTXP0_227 | FMC_A22_DP1_C2M_P/N | ✓ |
+| tx_data_p[1] | DP2_C2M | A26/A27 | C8/C7 | MGTHTXP1_227 | FMC_A26_DP2_C2M_P/N | ✓ |
+| tx_data_p[2] | DP0_C2M | C2/C3 | B6/B5 | MGTHTXP2_227 | FMC_C02_DP0_C2M_P/N | ✓ |
+| tx_data_p[3] | DP3_C2M | A30/A31 | A8/A7 | MGTHTXP3_227 | FMC_A30_DP3_C2M_P/N | ✓ |
+
+*Source: adrv9009_signals.sch §A; DEC-049 gate 7 diff-pair integrity; DEC-054
+lane-mapping verification (adrv9009_fmc.txt, system_constr.xdc, system_top.v,
+adrv9009_bd.tcl).*
+
+### 1.2 GTH Reference Clocks
+
+AC coupling is on the SOM side (DEC-049; SOM schematic sheet 10). No carrier
+coupling caps needed. Carrier trace runs J4 → J2 (connector-to-connector).
+
+| Group | Signal | P net | N net | SOM/FPGA ball | Reference |
+|---|---|---|---|---|---|
+| GTH REFCLK | REFCLK0 | FMC_D04_GBTCLK0_M2C_P | FMC_D05_GBTCLK0_M2C_N | D10/D9 → JX2.D26/D27 | adrv9009_signals.sch; DEC-049 |
+| GTH REFCLK | REFCLK1 | FMC_B20_GBTCLK1_M2C_P | FMC_B21_GBTCLK1_M2C_N | B10/B9 → JX2.C27/C28 | adrv9009_signals.sch; DEC-049 |
+
+### 1.3 LVDS Sync / SYSREF Pairs (Bank 65, via J1/JX1)
+
+These are LVCMOS18 LVDS signals routed from J4 (FMC) across the carrier to J1
+(JX1 carrier socket → FPGA Bank 65). No AC coupling caps on carrier.
+
+| Group | Signal | P net (carrier) | N net (carrier) | FPGA HP_DP alias | JX1 pins | Reference |
+|---|---|---|---|---|---|---|
+| LVDS | sysref | FMC_G06_LA00_CC_P | FMC_G07_LA00_CC_N | HP_DP_33_GC_P/N | C31/C32 | adrv9009_signals.sch; DEC-049 |
+| LVDS | sysref_out | FMC_D08_LA01_CC_P | FMC_D09_LA01_CC_N | HP_DP_32_GC_P/N | D32/D33 | adrv9009_signals.sch; DEC-049 |
+| LVDS | tx_sync | FMC_H07_LA02_P | FMC_H08_LA02_N | HP_DP_30_P/N | B28/B29 | adrv9009_signals.sch; DEC-049 |
+| LVDS | rx_sync | FMC_G09_LA03_P | FMC_G10_LA03_N | HP_DP_46_P/N | B42/B43 | adrv9009_signals.sch; DEC-049 |
+| LVDS | rx_os_sync | FMC_G27_LA25_P | FMC_G28_LA25_N | HP_DP_26_P/N | A28/A29 | adrv9009_signals.sch; DEC-049 |
+
+### 1.4 Other Differential Pairs
+
+No USB SuperSpeed (SS) lanes present in design. No other differential pairs
+identified in the netlist beyond the groups above. Single-ended `_N` suffix
+signals (SOM_RESET_IN_N, CC_RESET_OUT_N, etc.) are active-low LVCMOS, not diff
+pairs.
+
+---
+
+## 2. Impedance Targets
+
+### 2.1 JESD204B GTH Lane Impedance
+
+**Target: Zdiff = 100 Ω ± 10%, ZO = 50 Ω to ground.**
+
+> "All JESD204B lane traces must be impedance controlled to achieve 50 Ω to
+> ground. It is recommended that the differential pair be coplanar and loosely
+> coupled."
+> — ADRV9009 Data Sheet Rev B, §JESD204B Trace Routing Recommendations, p113
+
+> "Route the differential pairs on a single plane using a solid ground plane as
+> a reference on the layers above and below these traces."
+> — ADRV9009 DS Rev B, §Routing Recommendations, p112
+
+**Source confirmed on-disk:** ADRV9009.pdf → /tmp/adrv9009_ds.txt, lines
+26449–26454 and 26540–26548.
+
+Loose coupling geometry example from ADRV9009 DS (Figure 444, p113):
+- Trace width: 5 mil (127 µm)
+- Edge-to-edge spacing within pair: 15 mil (381 µm)
+- "Loosely coupled" (not tightly coupled)
+
+**[TO CONFIRM]** Trace width/spacing for our specific stackup (8-layer, dielectric
+TBD with fab). Compute from impedance calculator once fab stackup is locked.
+
+### 2.2 GTH Reference Clock Impedance
+
+**Target: ZO = 50 Ω (= Zdiff = 100 Ω).**
+
+> "The REF_CLK_IN± signal trace and the SYSREF signal trace are impedance
+> controlled for characteristic impedance (ZO) = 50 Ω."
+> — ADRV9009 DS Rev B, §Routing Recommendations, p112
+
+**Source confirmed on-disk:** ADRV9009.pdf → /tmp/adrv9009_ds.txt, line 26482.
+
+Note: ADRV9009 REF_CLK_IN± requires a 100 Ω termination resistor placed near
+the ADC's REF_CLK_IN± pins on the ADRV9009-W/PCBZ board (ADRV9009 DS, p114).
+On our board, the refclk signals terminate at the JX2 connector (SOM side), and
+the SOM's FPGA GTH reference clock input has internal termination. No external
+termination resistor is required on the carrier for the FPGA side.
+
+**[VERIFIED 2026-06-23]** UG576 v1.7.1 §5 Board Design Guidelines confirms
+MGTREFCLKP/N is internally terminated with 100 Ω differential (UG576 text
+line 30543). On-die calibrated termination; no external resistor required on
+carrier. AC coupling (0.01 µF) on SOM side confirmed (DEC-049). Refclk trace
+impedance 100 Ω differential is consistent with on-chip termination.
+Note: RCAL calibration resistor (100 Ω precision, between MGTAVTTRCAL and
+MGTRREF) is on the SOM PCB (FPGA package pins — not carrier responsibility);
+correctly absent from carrier schematics.
+
+### 2.3 LVDS Sync / SYSREF Impedance
+
+**Target: Zdiff = 100 Ω ± 10%.**
+
+> "All LVDS pairs must be length-matched to within 5 mils within each pair.
+> Use 100-ohm differential impedance (target ~3.5 mil trace, ~5 mil gap on
+> standard 4-layer FR4)."
+> — Capture Guide (ADRV9009_UZEV_Schematic_Capture_Guide-1.pdf), §PCB Layout,
+> p8 (on-disk: /tmp/capture_guide.txt, lines 652–653)
+
+Note: The capture guide geometry (3.5 mil / 5 mil gap) is for 4-layer FR4.
+Our board is 8-layer; actual trace/gap will differ. Recompute from fab stackup.
+
+**[TO CONFIRM]** VITA 57.1 FMC spec §6.x for LA pair impedance requirement.
+Standard VITA 57.1 requires 100 Ω differential for FMC differential pairs;
+this is consistent with the capture guide and the ADRV9009 DS.
+
+---
+
+## 3. Routing Constraints by Group
+
+### 3.1 JESD204B GTH SERDES Lanes (8 pairs, 16 nets + caps)
+
+**Preferred routing layer: In2.Cu (layer 2, signal).**
+Rationale: In2.Cu is sandwiched between In1.Cu (GND) above and In3.Cu (GND)
+below, providing dual solid ground references — the optimal configuration for
+stripline at JESD204B frequencies. Per ADRV9009 DS p113:
+> "on an 8-layer board, use Layer 7 for the stripline pair" (ADRV9009-W/PCBZ
+> layer numbering; equivalent to our In2.Cu in a GND–Signal–GND sandwich).
+
+Alternate layer: In5.Cu is acceptable for lower-priority lanes, but its
+reference planes are In4.Cu (power) above and In6.Cu (GND) below — asymmetric;
+avoid for JESD unless In2.Cu is congested.
+
+| Constraint | Value | Source |
+|---|---|---|
+| Zdiff | 100 Ω ± 10% | ADRV9009 DS Rev B p113 |
+| ZO (each conductor) | 50 Ω | ADRV9009 DS Rev B p112 |
+| Coupling style | Loosely coupled (not tightly coupled) | ADRV9009 DS Rev B Figure 444 |
+| Intra-pair skew (P-N mismatch) | ≤ 5 mil (127 µm) | **[DERIVED — NO MANDATORY SPEC]** UG576 v1.7.1 §5 and DS925 GTH DC specs (p421) both searched 2026-06-23; neither gives a PCB P/N routing length constraint. DS925 TOSKEW ≤ 10 ps is the chip TX output intrapair skew (silicon spec, not PCB routing rule). Derived bound: keep ≤ 10–15 ps (< 1/8 UI at 12.288 Gbps; 1 UI = 81.4 ps) → ≤ 60–90 mil FR4 (170 ps/in). ≤ 5 mil is well within this — conservative good practice. |
+| Inter-lane length match | **[VERIFIED — NOT BOARD-BINDING]** | CHAN_BOND_MAX_SKEW=1 (ADI util_adxcvr_xch.v lines 560/1064/1842/2724; UG576 §4 p287). At 12.288 Gbps / 40-bit: USRCLK ≈ 307 MHz → 1 cycle = 3.26 ns → ≈ 19 in FR4. Any carrier inter-lane mismatch is negligible vs. this limit. Good-practice target: ≤ 100–200 mil within a lane group. Caveat: if JESD204B subclass 1 deterministic latency required, verify subclass setting in ADI JESD IP config (Vivado IP GUI or .xci) before routing. |
+| Max trace length | < 6 inches (152 mm) preferred | ADRV9009 DS p113: "for distances > 6 in, use premium material" |
+| PCB material note | Standard FR4 acceptable if total path ≤ 6 in | ADRV9009 DS p113 |
+| Reference plane | Unbroken GND on both adjacent layers for full trace length | ADRV9009 DS p112 |
+| Via count | Minimize; use back-drilled or blind vias if possible | ADRV9009 DS p113 |
+| Via ground stitching | GND via pair adjacent to each signal via pair | ADRV9009 DS p113 |
+| Inter-lane isolation | Ground via fence, ≤ 1.24 mm via pitch | ADRV9009 DS Rev B p115, Eq. 1 at 12 GHz, ER=4.1 |
+| Trace width (indicative) | 5 mil (FR4, stripline) | ADRV9009 DS p113 Figure 444; recompute for final stackup |
+
+**AC coupling caps (C21–C28):**
+- Value: 100 nF (schematic)
+- Package: 0201 (C_0201_0603Metric footprint)
+- Placement: as close to J4 (FMC connector) as possible, away from J2 (JX2)
+- Per ADRV9009 DS p113: "The ac coupling capacitors (100 nF) on these signals
+  are placed near the connector and away from the chip to minimize coupling."
+- Pad size must match trace width through cap; use smooth tapers if pad ≠ trace width.
+- Both P and N caps for a given lane must be placed symmetrically to maintain
+  intra-pair balance.
+
+**TX lane path topology:**
+```
+J2 (JX2) → In2.Cu stripline → Cap (C2x) near J4 → short stub to J4 pin
+```
+Both segments (J2→cap and cap→J4) are impedance-controlled 100 Ω differential.
+
+### 3.2 GTH Reference Clocks (2 pairs, 4 nets)
+
+**Preferred routing layer: In2.Cu (same as JESD lanes, same reference planes).**
+
+| Constraint | Value | Source |
+|---|---|---|
+| Zdiff | 100 Ω ± 10% | ADRV9009 DS Rev B p112 |
+| Intra-pair skew | ≤ 5 mil | **[TO CONFIRM]** UG576 |
+| Inter-clock length match | N/A (clocks are independent) | — |
+| Reference plane | Unbroken GND on both adjacent layers | ADRV9009 DS p112 |
+| AC coupling on carrier | None required (on SOM) | DEC-049; SOM schematic sheet 10 |
+| Termination on carrier | None — FPGA GTH on-die, RCAL-calibrated | **[VERIFIED 2026-06-23]** UG576 v1.7.1 RX AFE (line 16313): calibrated internal termination resistors. Use Mode 1 AC-coupled (Table 4-3, line 16556): 800 mV internal, no external signal resistors. Table 5-9 PCB checklist (line 31192): only 100 nF AC caps listed for MGTHRXP/N and MGTHTXP/N; no external resistor rows. DS925 p421: RIN = 100 Ω internal. RCAL 100 Ω precision resistor is on SOM PCB — not carrier; correctly absent from carrier schematics. |
+| Max trace length | Same as JESD: < 6 inches preferred | ADRV9009 DS p113 |
+| Via count | Minimize | ADRV9009 DS p113 |
+
+### 3.3 LVDS Sync / SYSREF Pairs (5 pairs, 10 nets)
+
+**Preferred routing layer: In5.Cu (layer 5, signal).**
+Rationale: These signals are Bank 65 LVCMOS18 LVDS at much lower frequency
+than JESD lanes (SYSREF typically 1–10 MHz, SYNC at frame rate ~100 MHz).
+Keeping them on In5.Cu separates them from the high-speed JESD lanes on In2.Cu
+and reduces crosstalk. In5.Cu has In4.Cu (power) above and In6.Cu (GND) below;
+the GND reference on In6.Cu is sufficient for LVDS at these frequencies.
+
+Alternate: In2.Cu if routing congestion on In5.Cu, but keep LVDS signals
+separated from JESD lane pairs (minimum 3× trace width clearance between groups).
+
+| Constraint | Value | Source |
+|---|---|---|
+| Zdiff | 100 Ω ± 10% | Capture Guide §PCB Layout p8 |
+| Intra-pair skew (P-N) | ≤ 5 mil (127 µm) | Capture Guide §PCB Layout p8 |
+| Inter-pair length match | **[TO CONFIRM]** | JESD204B subclass 1 sysref timing; typically not required to match across pairs |
+| Reference plane | GND on In6.Cu (below In5.Cu) | stackup DEC-053 |
+| AC coupling on carrier | None | adrv9009_signals.sch |
+| Trace width (indicative) | 3.5–4 mil (recompute for 8-layer stackup) | Capture Guide (4-layer FR4 baseline) |
+
+Note on sysref (LA00_CC) and sysref_out (LA01_CC): these are GC-capable pins
+(HP_DP_33_GC and HP_DP_32_GC in the FPGA). The CC (clock-capable) designation
+means they can be connected to clock routing in the FPGA fabric; no additional
+PCB constraint beyond standard LVDS differential impedance.
+
+**Return-path rule — LVDS pairs on In5.Cu must not cross power-plane split
+boundaries.**
+In4.Cu (the reference plane above In5.Cu) is a power distribution layer with
+splits between different supply rails. A trace crossing a split loses return-current
+continuity on that plane, producing a return-path discontinuity and common-mode
+noise injection into the LVDS pair. The impact on Zdiff is negligible at LVDS
+frequencies; the constraint is about return-path integrity and EMI, not impedance.
+
+Rule: Route all LVDS sync/sysref pairs over a continuous copper pour region on
+In4.Cu, OR provide adjacent GND stitching vias to In6.Cu (the solid GND plane
+below In5.Cu) bracketing any power-plane split that cannot be avoided. Preferred:
+keep all LVDS routing within a single supply-domain region of In4.Cu.
+
+---
+
+## 4. AC Coupling Cap Placement Constraint Summary
+
+| Cap pair | Lane | Position | Constraint |
+|---|---|---|---|
+| C21, C22 | TX DP1 (tx_data[0]) | Near J4 (FMC) | Within 2 mm of J4 pin field |
+| C23, C24 | TX DP2 (tx_data[1]) | Near J4 (FMC) | Within 2 mm of J4 pin field |
+| C25, C26 | TX DP0 (tx_data[2]) | Near J4 (FMC) | Within 2 mm of J4 pin field |
+| C27, C28 | TX DP3 (tx_data[3]) | Near J4 (FMC) | Within 2 mm of J4 pin field |
+
+Caps must be on the same side and layer as the FMC trace segment. P-cap and
+N-cap for each lane must be placed symmetrically (equal distance from J4 pad,
+equal stub length to cap pad).
+
+---
+
+## 5. Stackup Routing Assignment Summary
+
+| Layer | Name | Assigned use |
+|---|---|---|
+| 0 | F.Cu | Components, short escapes, LVCMOS single-ended |
+| 1 | In1.Cu | GND (reference plane) |
+| **2** | **In2.Cu** | **JESD204B GTH lanes + GTH refclks (primary)** |
+| 3 | In3.Cu | GND (reference plane) |
+| 4 | In4.Cu | Power distribution |
+| **5** | **In5.Cu** | **LVDS sync/sysref, other controlled-impedance diff pairs** |
+| 6 | In6.Cu | GND (reference plane) |
+| 31 | B.Cu | Components, short escapes, LVCMOS single-ended |
+
+---
+
+## 6. Open Items — Must Resolve Before Gerber
+
+| # | Item | Blocker | Action |
+|---|---|---|---|
+| A | Final trace width/spacing for 100 Ω diff on In2.Cu and In5.Cu | Gerber | **Dk now primary-sourced (MacroFab KB: 3.8–4.0 @ 1 GHz; use 3.9 midpoint). Provisional geometry: w=6 mil, s=15 mil ETE (§7.2). Still open: per-layer dielectric heights h for the custom controlled-impedance stackup — provided by MacroFab with the custom-quote stackup sheet, not in their public KB. Final w locked once h is confirmed.** |
+| B | Intra-pair skew (no mandatory PCB spec found) | — | **PARTIALLY RESOLVED 2026-06-23.** UG576 v1.7.1 + DS925 GTH specs searched; neither gives a PCB P/N routing length constraint. GTH refclk termination → VERIFIED (§2.2, §3.2). Inter-lane matching → VERIFIED NOT BOARD-BINDING (item D). Intra-pair: ≤ 5 mil retained as conservative derived practice. Not a Gerber blocker; JESD204B standard would be definitive source if mandated cite required. |
+| C | VITA 57.1 §6 FMC differential pair impedance | Gerber | Cross-check; expected 100 Ω, consistent with on-disk sources |
+| D | Inter-lane matching — JESD subclass 1 deterministic latency caveat | — | **VERIFIED — NOT BOARD-BINDING 2026-06-23.** CHAN_BOND_MAX_SKEW=1 → ≈ 19 in FR4 budget; carrier board mismatch is negligible (see §3.1). Good-practice: ≤ 100–200 mil. Residual: if subclass 1 deterministic latency required, verify ADI JESD IP subclass param — out of carrier PCB scope. Not a Gerber blocker. |
+| E | MH drill diameter (M2.5 vs M3) + PTH+GND conversion (approved Option a) | Gerber | Awaiting Avnet reply (Items 2+3 from Phase 1 open list) |
+| F | Connector rotation JX1/JX2/JX3 (placeholder 0°) | Gerber | Awaiting Avnet ref PCB or physical SOM |
+
+Items A, B (intra-pair only), C remain **impedance/routing constraints** not fully primary-sourced. Items B (termination + inter-lane) and D now VERIFIED (see table). Items E–F are **placement/footprint** items carried from Phase 1.
+
+None of items A–F block the placement phase or Quilter constraint-prep.
+
+---
+
+## 7. Candidate Stackup & Provisional Trace Geometry
+
+> **PROVISIONAL — ALL VALUES IN THIS SECTION MUST BE CONFIRMED AGAINST THE
+> FAB'S ACTUAL STACKUP BEFORE GERBER SIGN-OFF. Do not treat these as
+> manufactured-board specifications.**
+
+### 7.1 Candidate 8-Layer 1.6 mm FR4 Stackup
+
+**Assumptions:**
+- Total finished thickness: 1.6 mm (63.0 mil)
+- Outer copper: 1 oz/ft² (34.8 µm = 1.4 mil)
+- Inner copper: 0.5 oz/ft² (17.4 µm = 0.7 mil)
+- Dk: 4.3 at mid-band FR4 (see note below)
+- Symmetric construction (mirror symmetry at centre core)
+
+Total copper: 2×1.4 + 6×0.7 = 7.0 mil; total dielectric: 56.0 mil; sum = 63.0 mil ✓
+
+| Position | Layer / Interface | Material | Thickness (mil) | Thickness (µm) | Dk |
+|---|---|---|---|---|---|
+| L1 | **F.Cu** (outer, signal/escape) | 1 oz copper | 1.4 | 35 | — |
+| L1→L2 | Prepreg | FR4 (e.g. 2×1080 or 1×2116) | **4.0** | 102 | 4.3 |
+| L2 | **In1.Cu** (GND reference plane) | 0.5 oz copper | 0.7 | 18 | — |
+| L2→L3 | Core | FR4 | **7.0** | 178 | 4.3 |
+| L3 | **In2.Cu** (JESD204B + refclk) | 0.5 oz copper | 0.7 | 18 | — |
+| L3→L4 | Core | FR4 | **7.0** | 178 | 4.3 |
+| L4 | **In3.Cu** (GND reference plane) | 0.5 oz copper | 0.7 | 18 | — |
+| L4→L5 | Core | FR4 (centre/thick core) | **20.0** | 508 | 4.3 |
+| L5 | **In4.Cu** (power distribution) | 0.5 oz copper | 0.7 | 18 | — |
+| L5→L6 | Core | FR4 | **7.0** | 178 | 4.3 |
+| L6 | **In5.Cu** (LVDS sync/sysref) | 0.5 oz copper | 0.7 | 18 | — |
+| L6→L7 | Core | FR4 | **7.0** | 178 | 4.3 |
+| L7 | **In6.Cu** (GND reference plane) | 0.5 oz copper | 0.7 | 18 | — |
+| L7→L8 | Prepreg | FR4 (e.g. 2×1080 or 1×2116) | **4.0** | 102 | 4.3 |
+| L8 | **B.Cu** (outer, signal/escape) | 1 oz copper | 1.4 | 35 | — |
+| | **TOTAL** | | **63.0 mil** | **1601 µm ≈ 1.6 mm** | |
+
+**Material spec — MacroFab primary source (help.macrofab.com/knowledge/pcb-layer-stackups):**
+
+| Property | Value | Condition | Status |
+|---|---|---|---|
+| Material grade | TG-170 (FR4) | Platform default | Confirm exact grade at quote — platform dropdown shows "FR4-TG175"; minor naming discrepancy, flag at quote stage |
+| Dk | 4.3–4.5 | @ 1 MHz | Primary-sourced |
+| Dk | **3.8–4.0** | **@ 1 GHz** | **Primary-sourced — use for GHz-rate signals** |
+| Loss tangent (tan δ) | 0.012–0.014 | @ 1 GHz | Primary-sourced |
+| Min board thickness (8-layer) | 1.0 mm | Standard | Our 1.6 mm is within range ✓ |
+| Board thickness tolerance | ±0.15 mm | At 1.6 mm nominal | Primary-sourced |
+
+**Dk is frequency-dependent — use the correct value for each signal group:**
+- **JESD204B SERDES + GTH refclks (GHz range):** use Dk = **3.9** (midpoint of 3.8–4.0
+  @ 1 GHz). This is now **FAB-PRIMARY-SOURCED**. The prior §7 Rev 0.2 value of 4.3 was
+  the 1 MHz figure — incorrect for GHz-rate signal impedance calculations. See §7.2.1
+  for corrected trace geometry.
+- **LVDS sync/sysref (sub-GHz — sysref ~7 MHz, sync ~100 MHz):** actual Dk at these
+  frequencies is 4.1–4.4, between the 1 MHz and 1 GHz tabulated values. Dk = 3.9 is
+  used in §7.2.2 for consistency and produces a slightly conservative (slightly wide)
+  trace estimate. Actual impedance at sub-GHz will be within ±5% of the GHz calculation.
+
+**Loss tangent / insertion loss awareness (JESD204B lanes):**
+At 12 GHz, dielectric loss scales roughly linearly from the 1 GHz tan δ value.
+Rough estimate for a 150 mm (6-inch) In2.Cu stripline at 12 GHz: dielectric loss
+≈ 4–5 dB, conductor loss ≈ 2–3 dB, total ≈ 6–8 dB insertion loss. This approaches
+the JESD204B receiver sensitivity limit and is consistent with the ADRV9009 DS note
+that standard FR4 is acceptable for paths ≤ 6 inches but premium material
+(RO4350B / RO4003C) is recommended beyond that. Our board (152.4 mm = 6.0 inches
+maximum diagonal) is at the boundary. Confirm in SI simulation before finalising
+routing if any lane approaches the maximum path length.
+
+**Centre core note:** The 20.0 mil centre core provides warp symmetry for the finished
+board. Its exact thickness is adjusted by the fab to meet total-thickness spec and may
+differ from 20.0 mil; the signal layers (In2/In5) are unaffected because they reference
+their immediate neighbour planes, not the centre core.
+
+### 7.2 Controlled-Impedance Trace Geometry Estimates
+
+**Formula used: Wheeler symmetric stripline (IPC-2141A Section 4.1)**
+
+    Z₀ = (60 / √Dk) × ln[ 4b / (0.67π(0.8w + t)) ]
+
+    where:
+      w  = trace width (mil)
+      t  = copper thickness (mil) = 0.7 mil (inner 0.5 oz)
+      b  = total ground-plane separation (mil) = h_above + t + h_below
+      Dk = dielectric constant:
+             3.9 for GHz-rate signals (JESD/refclk) — MacroFab KB @ 1 GHz midpoint
+             ~4.2 for sub-GHz LVDS — 3.9 used below for consistency (slightly conservative)
+
+    Valid for w/b < 0.85. Check this after substituting fab stackup.
+
+**Differential impedance (loosely coupled edge-coupled pair):**
+
+    Zdiff ≈ 2 × Z₀  (valid when edge-to-edge spacing s ≥ 3×w)
+
+    At s = 15 mil, w = 5 mil: s/w = 3.0 — borderline loose; coupling correction
+    is < 3%, negligible relative to the ±10% impedance tolerance.
+
+---
+
+#### 7.2.1 In2.Cu — JESD204B Lanes and GTH RefClks (symmetric stripline)
+
+Reference planes: In1.Cu (GND) above at 7.0 mil; In3.Cu (GND) below at 7.0 mil.
+
+    h_above = 7.0 mil (CORE₂₃)
+    h_below = 7.0 mil (CORE₃₄)
+    b = 7.0 + 0.7 + 7.0 = 14.7 mil
+
+**Corrected calculation at Dk = 3.9 (MacroFab @ 1 GHz, primary source):**
+
+At w = 5 mil:
+
+    Z₀ = (60/√3.9) × ln[4×14.7 / (0.67×π×(0.8×5 + 0.7))]
+       = 30.38 × ln[58.8 / 9.893]
+       = 30.38 × ln[5.944]
+       = 30.38 × 1.783
+       ≈ 54.2 Ω  (ESTIMATE)
+
+    Zdiff ≈ 2 × 54.2 = 108 Ω  (ESTIMATE, s = 15 mil ETE) — slightly above 100 Ω target
+
+Solve for w at Z₀ = 50 Ω exactly (Dk = 3.9): **w ≈ 5.9 mil**
+
+Over full GHz Dk range (3.8–4.0): w = **5.7–6.0 mil**.
+Provisional layout value: **w = 6 mil (152 µm)** — conservative end of the range.
+
+**Correction direction (Dk 4.3 → 3.9):** Lower Dk raises Z₀ for fixed geometry
+(Z₀ ∝ 1/√Dk). The prior Dk=4.3 estimate of w=5 mil already placed Zdiff above
+100 Ω (≈103 Ω); at the correct Dk=3.9, the same 5 mil trace gives Zdiff≈108 Ω
+(8% high). Correction is a **wider** trace — not narrower. Delta: +0.6–0.7 mil.
+
+**Prior Dk = 4.3 calculation (1 MHz value — SUPERSEDED, shown for reference):**
+
+    Z₀ = (60/√4.3) × ln[58.8/9.893] = 28.93 × 1.783 ≈ 51.6 Ω → Zdiff ≈ 103 Ω at w=5 mil
+    w for Z₀=50 Ω: ≈ 5.3 mil
+
+    Why wrong: Dk = 4.3 is the MacroFab material value @ 1 MHz, not the GHz-range
+    value (3.8–4.0). Using the 1 MHz Dk for a 12 Gbps signal understates Z₀ by ~5%
+    and produces a trace that is ~0.6 mil too narrow to hit 100 Ω.
+
+| Parameter | Value | Unit | Status |
+|---|---|---|---|
+| Signal layer | In2.Cu | — | locked (DEC-053) |
+| Reference planes | In1.Cu (GND) + In3.Cu (GND) | — | locked |
+| h_above / h_below | 7.0 / 7.0 | mil | ESTIMATE — fab to confirm |
+| b (GND-to-GND) | 14.7 | mil | ESTIMATE |
+| Dk | **3.9** (GHz midpoint) | — | FAB-PRIMARY-SOURCED — MacroFab KB 3.8–4.0 @ 1 GHz; prior value 4.3 was 1 MHz figure, SUPERSEDED |
+| Trace width w | **6 mil (152 µm)** provisional | mil / µm | ESTIMATE — Dk=3.9; range 5.7–6.0 mil over Dk 3.8–4.0; prior Rev 0.2 value was 5 mil (wrong Dk=4.3, superseded) |
+| Edge-to-edge spacing s | **15 mil (381 µm)** | mil / µm | from ADRV9009 DS Fig. 444; unchanged |
+| Center-to-center pitch | 21 mil (533 µm) | mil / µm | ESTIMATE (6 + 15 = 21 mil) |
+| Z₀ (single-ended) at w=6 mil | ≈ 49.4 Ω | Ω | ESTIMATE, Dk=3.9 |
+| Zdiff (loose coupling) at w=6 mil | ≈ 98.8 Ω | Ω | ESTIMATE; target 100 Ω ±10% ✓ (within 2%) |
+| Zdiff at w=5 mil (prior, superseded) | ≈ 108 Ω | Ω | ESTIMATE, Dk=3.9; within ±10% but 8% high; use w=6 mil |
+| w/b validity check | 6/14.7 = 0.41 < 0.85 | — | formula valid ✓ |
+
+**ADI-consistent; height assumption unstated.** The ADRV9009 DS (Figure 444, p113)
+specifies 5 mil / 15 mil ETE for 100 Ω differential stripline with GND planes above
+and below the signal layer (DS lines 26449–26454). The DS does **not** state the
+dielectric height h (distance to reference plane) for this recommendation. The DS eval
+board (ADRV9009-W/PCBZ) is a 14-layer board (JESD on Layer 5 and Layer 10), uses
+FR4-370HR at Dk = 4.1 (stated in DS via-fence section, ~line 26670), and provides no
+ground-plane separation value. Our candidate now uses Dk = 3.9 (MacroFab GHz primary source) and h = 7.0 mil. The
+Dk is now primary-sourced; h remains an estimate pending the MacroFab custom-quote
+stackup sheet. At w=6 mil the calculation yields Zdiff ≈ 105 Ω, within 100 Ω ±10%,
+but this is a stackup-specific estimate, not DS-validated geometry for our particular h.
+
+---
+
+#### 7.2.2 In5.Cu — LVDS Sync / SYSREF (symmetric stripline, asymmetric references)
+
+Reference planes: In4.Cu (power) above at 7.0 mil; In6.Cu (GND) below at 7.0 mil.
+Geometry is identical to In2.Cu (b = 14.7 mil), so the impedance formula gives the
+same result.
+
+    b = 7.0 + 0.7 + 7.0 = 14.7 mil
+    Dk = 3.9 (MacroFab @ 1 GHz; conservative for sub-GHz LVDS, actual Dk ~4.1–4.4)
+    Z₀ ≈ 54.2 Ω at w = 5 mil  (ESTIMATE, Dk=3.9)
+    Z₀ ≈ 49.4 Ω at w = 6 mil  (ESTIMATE, Dk=3.9)  ← provisional layout value
+    Zdiff ≈ 105 Ω at w=6 mil, s = 15 mil ETE  (ESTIMATE)
+
+| Parameter | Value | Unit | Status |
+|---|---|---|---|
+| Signal layer | In5.Cu | — | locked (DEC-053) |
+| Reference planes | In4.Cu (power) + In6.Cu (GND) | — | locked |
+| Dk used | 3.9 (MacroFab @ 1 GHz; conservative for sub-GHz LVDS) | — | FAB-PRIMARY-SOURCED |
+| Trace width w | **6 mil (152 µm)** provisional | mil / µm | ESTIMATE, Dk=3.9; same geometry as In2.Cu for simplicity |
+| Edge-to-edge spacing s | **15 mil (381 µm)** | mil / µm | ESTIMATE |
+| Z₀ (single-ended) at w=6 mil | ≈ 49.4 Ω | Ω | ESTIMATE, Dk=3.9 |
+| Zdiff (loose coupling) at w=6 mil | ≈ 98.8 Ω | Ω | ESTIMATE; target 100 Ω ±10% ✓ (within 2%) |
+
+**Power-plane reference note:** In4.Cu is a power distribution layer, not ground.
+For differential (odd-mode) signals, the reference plane carries primarily common-mode
+current; odd-mode current is contained between the trace pair. The impedance impact of
+referencing a power plane vs. a GND plane is typically < 5% for Zdiff, well inside the
+±10% tolerance. For LVDS at 1–200 MHz, this effect is further diminished by the low
+frequency. If the fab's field solver shows deviation > 5%, route LVDS on In2.Cu instead.
+
+---
+
+#### 7.2.3 F.Cu / B.Cu — Outer Layer Microstrip (reference only)
+
+These layers carry only short escape traces and LVCMOS single-ended signals (§5). No
+controlled-impedance differential routing planned on outer layers. Provided for
+reference if any future signal requires an outer-layer single-ended 50 Ω trace.
+
+Formula: Wheeler microstrip (IPC-2141A):
+
+    Z₀ = (87/√(Dk + 1.41)) × ln[5.98h / (0.8w + t)]
+
+    h = 4.0 mil (PP₁₂ for F.Cu; PP₇₈ for B.Cu)
+    t = 1.4 mil (1 oz outer copper)
+    Dk = 4.3
+
+    Solving for Z₀ = 50 Ω: w ≈ 5.8 mil → **use 6 mil (152 µm)**  (ESTIMATE)
+
+---
+
+### 7.3 Confidence Assessment
+
+| Value | Classification | What it would take to firm it up |
+|---|---|---|
+| Dk = 3.9 (GHz) / 4.3–4.5 (1 MHz) | **FAB-PRIMARY-SOURCED** — MacroFab KB (help.macrofab.com/knowledge/pcb-layer-stackups) gives 3.8–4.0 @ 1 GHz, 4.3–4.5 @ 1 MHz. GHz value used for JESD/refclk. DS eval board uses Dk=4.1 (FR4-370HR, DS line ~26670) — consistent. | ✓ Sourced. Still confirm exact laminate grade (TG-170 vs TG-175) at quote |
+| h_above = h_below = 7.0 mil | Textbook typical for 8L 1.6mm | Fab's stackup sheet (actual core/prepreg catalogue values; ±10% variation typical) |
+| Wheeler Z₀ formula accuracy | Calculator-derived; ±5% vs. field-solver | Adequate for layout planning given ±10% impedance tolerance; re-run in field-solver (Polar SI, CITS880s) for controlled-impedance note |
+| Zdiff ≈ 2×Z₀ approximation | Calculator-derived; < 3% error at s=15 mil | Adequate for loose coupling; confirmed by ADRV9009 DS using same geometry |
+| w = 5 mil / s = 15 mil ETE | Derived from formula + DS-specified geometry | Consistent; adjust w in ≤ 0.5 mil steps once fab confirms Dk and h |
+| Centre core = 20.0 mil | Chosen for thickness balance; structural | Fab will assign actual core catalogue value; does not affect signal layers |
+| Via stub < 50 mil | Rule-of-thumb from Capture Guide | Field-solver or TDR measurement for final verification; adequate for planning |
+| Outer microstrip w ≈ 6 mil | Calculator-derived reference | Not on critical path; compute at layout time if needed |
+
+**Bottom line for layout start:** Route JESD/refclk on In2.Cu and LVDS on In5.Cu at
+**w = 6 mil / s = 15 mil ETE** (Zdiff ≈ 99 Ω on candidate stackup, Dk=3.9 — right at 100 Ω target). Dk is
+now fab-primary-sourced (MacroFab KB). Dielectric height h = 7.0 mil remains an
+estimate — replace with MacroFab's custom controlled-impedance stackup heights before
+setting the KiCad `.kicad_dru` DRC impedance rules file. At that point recompute w;
+expect 5.7–6.0 mil across the Dk 3.8–4.0 range.
+
+---
+
+*End of LAYOUT_CONSTRAINTS.md Rev 0.5*
